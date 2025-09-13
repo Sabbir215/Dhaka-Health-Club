@@ -1,0 +1,79 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Icon } from 'astro-icon/components';
+
+const user = {
+	name: 'John Doe',
+};
+---
+
+<Layout title="Dashboard - Dhaka Health Club (DHC)">
+	<div class="min-h-screen bg-gray-900 p-4 md:p-8">
+		<div class="container mx-auto">
+			<h1 class="text-3xl md:text-4xl font-bold text-white mb-8">Welcome, {user.name}</h1>
+			
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 mb-8">
+				<div class="bg-gray-800 p-4 md:p-6 rounded-lg shadow-2xl border-l-4 border-green-500">
+					<div class="flex items-center">
+						<Icon name="mdi:sleep" class="w-6 h-6 md:w-8 md:h-8 text-green-500 mr-4" />
+						<div>
+							<p class="text-gray-400 text-sm">Sleep</p>
+							<p class="text-xl md:text-2xl font-bold">8h 15m</p>
+						</div>
+					</div>
+				</div>
+				<div class="bg-gray-800 p-4 md:p-6 rounded-lg shadow-2xl border-l-4 border-blue-500">
+					<div class="flex items-center">
+						<Icon name="mdi:food-apple" class="w-6 h-6 md:w-8 md:h-8 text-blue-500 mr-4" />
+						<div>
+							<p class="text-gray-400 text-sm">Food</p>
+							<p class="text-xl md:text-2xl font-bold">2,400 cal</p>
+						</div>
+					</div>
+				</div>
+				<div class="bg-gray-800 p-4 md:p-6 rounded-lg shadow-2xl border-l-4 border-red-500">
+					<div class="flex items-center">
+						<Icon name="mdi:weight-lifter" class="w-6 h-6 md:w-8 md:h-8 text-red-500 mr-4" />
+						<div>
+							<p class="text-gray-400 text-sm">Exercise</p>
+							<p class="text-xl md:text-2xl font-bold">1h 30m</p>
+						</div>
+					</div>
+				</div>
+				<div class="bg-gray-800 p-4 md:p-6 rounded-lg shadow-2xl border-l-4 border-yellow-500">
+					<div class="flex items-center">
+						<Icon name="mdi:water" class="w-6 h-6 md:w-8 md:h-8 text-yellow-500 mr-4" />
+						<div>
+							<p class="text-gray-400 text-sm">Water</p>
+							<p class="text-xl md:text-2xl font-bold">2.5L</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+				<div class="bg-gray-800 p-6 rounded-lg shadow-2xl">
+					<h2 class="text-2xl font-bold text-white mb-4">Quick Actions</h2>
+					<div class="flex flex-col space-y-4">
+						<a href="#" class="flex items-center p-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition duration-300">
+							<Icon name="mdi:plus-box" class="w-6 h-6 text-green-500 mr-4" />
+							<span>Log a Healthy Sleep</span>
+						</a>
+						<a href="#" class="flex items-center p-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition duration-300">
+							<Icon name="mdi:plus-box" class="w-6 h-6 text-blue-500 mr-4" />
+							<span>Log a Diet</span>
+						</a>
+						<a href="#" class="flex items-center p-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition duration-300">
+							<Icon name="mdi:plus-box" class="w-6 h-6 text-red-500 mr-4" />
+							<span>Log a Workout</span>
+						</a>
+					</div>
+				</div>
+				<div class="bg-gray-800 p-6 rounded-lg shadow-2xl">
+					<h2 class="text-2xl font-bold text-white mb-4">Recent Activity</h2>
+					<p class="text-gray-400">No recent activity.</p>
+				</div>
+			</div>
+		</div>
+	</div>
+</Layout>
