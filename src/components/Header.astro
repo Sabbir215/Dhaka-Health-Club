@@ -1,34 +1,86 @@
----
-import { Icon } from 'astro-icon/components';
-
-const links = [
-  { href: '/', text: 'Home' },
-  { href: '/dashboard', text: 'Dashboard' },
-  { href: '/profile', text: 'Profile' },
-];
---- 
-
-<header class="bg-gray-800 bg-opacity-80 backdrop-blur-md text-white p-4 sticky top-0 z-50">
-  <div class="container mx-auto flex justify-between items-center">
-    <a href="/" class="text-2xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-teal-500">DHC</a>
-    <nav class="hidden md:flex space-x-4">
-      {links.map(link => <a href={link.href} class="hover:text-green-400 transition duration-300">{link.text}</a>)}
-    </nav>
+<header class="bg-white shadow-md">
+  <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+    <a href="/" class="text-2xl font-bold text-primary">Dhaka Health Club</a>
+    <div class="hidden md:flex space-x-6 items-center" id="desktop-nav">
+      <!-- Navigation links will be dynamically injected here -->
+    </div>
     <div class="md:hidden">
-      <button id="menu-btn" class="focus:outline-none">
-        <Icon name="mdi:menu" class="w-6 h-6" />
+      <!-- Mobile Menu Button -->
+      <button id="mobile-menu-button" class="text-text-primary focus:outline-none">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+        </svg>
       </button>
     </div>
-  </div>
-  <div id="mobile-menu" class="hidden md:hidden">
-    <nav class="flex flex-col space-y-2 mt-4">
-      {links.map(link => <a href={link.href} class="hover:text-green-400 transition duration-300">{link.text}</a>)}
-    </nav>
+  </nav>
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="hidden md:hidden px-6 pb-4">
+    <!-- Mobile navigation links will be dynamically injected here -->
   </div>
 </header>
 
 <script>
-  document.getElementById('menu-btn').addEventListener('click', function() {
-    document.getElementById('mobile-menu').classList.toggle('hidden');
+  import { onAuthStateChanged, logOut } from "../firebase/auth";
+
+  const desktopNav = document.getElementById("desktop-nav");
+  const mobileMenu = document.getElementById("mobile-menu");
+  const mobileMenuButton = document.getElementById("mobile-menu-button");
+
+  const loggedOutLinks = `
+    <a href="/" class=\"text-text-secondary hover:text-primary transition-colors\">Home</a>
+    <a href="/login" class=\"text-text-secondary hover:text-primary transition-colors\">Login</a>
+    <a href="/register" class=\"btn btn-primary\">Register</a>
+  `;
+
+  const loggedInLinks = `
+    <a href="/" class=\"text-text-secondary hover:text-primary transition-colors\">Home</a>
+    <a href="/dashboard" class=\"text-text-secondary hover:text-primary transition-colors\">Dashboard</a>
+    <a href="/profile" class=\"text-text-secondary hover:text-primary transition-colors\">Profile</a>
+    <button id="logout-button" class=\"btn btn-secondary\">Logout</button>
+  `;
+
+  const mobileLoggedOutLinks = `
+    <a href="/" class=\"block py-2 text-text-secondary hover:text-primary\">Home</a>
+    <a href="/login" class=\"block py-2 text-text-secondary hover:text-primary\">Login</a>
+    <a href="/register" class=\"block py-2 text-text-secondary hover:text-primary\">Register</a>
+  `;
+
+  const mobileLoggedInLinks = `
+    <a href="/" class=\"block py-2 text-text-secondary hover:text-primary\">Home</a>
+    <a href="/dashboard" class=\"block py-2 text-text-secondary hover:text-primary\">Dashboard</a>
+    <a href="/profile" class=\"block py-2 text-text-secondary hover:text-primary\">Profile</a>
+    <button id="mobile-logout-button" class=\"btn btn-secondary w-full mt-2\">Logout</button>
+  `;
+
+  onAuthStateChanged((user) => {
+    if (user) {
+      if(desktopNav) desktopNav.innerHTML = loggedInLinks;
+      if(mobileMenu) mobileMenu.innerHTML = mobileLoggedInLinks;
+
+      const logoutButton = document.getElementById("logout-button");
+      if (logoutButton) {
+        logoutButton.addEventListener("click", async () => {
+          await logOut();
+          window.location.href = "/login";
+        });
+      }
+
+      const mobileLogoutButton = document.getElementById("mobile-logout-button");
+      if (mobileLogoutButton) {
+        mobileLogoutButton.addEventListener("click", async () => {
+          await logOut();
+          window.location.href = "/login";
+        });
+      }
+    } else {
+      if(desktopNav) desktopNav.innerHTML = loggedOutLinks;
+      if(mobileMenu) mobileMenu.innerHTML = mobileLoggedOutLinks;
+    }
   });
+
+  if (mobileMenuButton && mobileMenu) {
+    mobileMenuButton.addEventListener("click", () => {
+      mobileMenu.classList.toggle("hidden");
+    });
+  }
 </script>

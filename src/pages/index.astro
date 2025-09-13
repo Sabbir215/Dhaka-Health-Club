@@ -1,59 +1,82 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { Icon } from 'astro-icon/components';
 ---
 
-<Layout title="Dhaka Health Club (DHC)">
-	<div class="hero bg-gradient-to-br from-gray-900 via-green-900 to-teal-800 text-white py-24 md:py-32">
-		<div class="hero-content text-center">
-			<div class="max-w-2xl mx-auto">
-				<h1 class="text-5xl md:text-7xl font-extrabold tracking-tighter mb-4 text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-500">Thrive Together</h1>
-				<p class="text-lg md:text-xl text-gray-300 mb-8 max-w-lg mx-auto">Join a supportive community dedicated to well-being. Share your journey, learn from others, and achieve your health goals together.</p>
-				<a href="/register" class="btn btn-primary bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-green-500/40 transform hover:scale-105 transition duration-300 text-lg">Join Our Club</a>
-			</div>
-		</div>
-	</div>
+<Layout title="Dhaka Health Club: Connect, Grow, and Thrive. Together.">
+  <!-- Hero Section -->
+  <section class="text-center py-20 md:py-28">
+    <div class="container mx-auto">
+      <div class="flex justify-center mb-8">
+        <img src="/community-hero.svg" alt="Community Illustration" class="w-full max-w-lg" />
+      </div>
+      <h1 class="text-5xl md:text-7xl font-bold mb-6 text-primary">Connect, Grow, and Thrive. Together.</h1>
+      <p class="text-xl md:text-2xl text-text-secondary mb-10 max-w-3xl mx-auto">Welcome to the Dhaka Health Club, a vibrant community dedicated to holistic health, personal growth, and making a positive impact on society.</p>
+      <div>
+        <a href="/register" class="btn btn-primary mr-4">Join Our Community</a>
+        <a href="/login" class="btn btn-secondary">Member Login</a>
+      </div>
+    </div>
+  </section>
 
-	<div class="bg-gray-900 py-16 md:py-20">
-		<div class="container mx-auto px-4">
-			<h2 class="text-3xl md:text-4xl font-bold text-center mb-12 uppercase tracking-tighter">Why Join Our Club?</h2>
-			<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-				<div class="card bg-gray-800 shadow-2xl backdrop-blur-lg backdrop-filter bg-opacity-50 border border-gray-700 transform hover:scale-105 transition duration-300">
-					<div class="card-body items-center text-center p-6 md:p-8">
-						<div class="p-4 bg-green-700 rounded-full mb-4">
-							<Icon name="mdi:account-group" class="w-8 h-8 text-white" />
-						</div>
-						<h3 class="card-title text-xl md:text-2xl font-bold">Connect with Peers</h3>
-						<p class="text-sm md:text-base">Find and connect with like-minded individuals who share your health and wellness goals.</p>
-					</div>
-				</div>
-				<div class="card bg-gray-800 shadow-2xl backdrop-blur-lg backdrop-filter bg-opacity-50 border border-gray-700 transform hover:scale-105 transition duration-300">
-					<div class="card-body items-center text-center p-6 md:p-8">
-						<div class="p-4 bg-green-700 rounded-full mb-4">
-							<Icon name="mdi:forum" class="w-8 h-8 text-white" />
-						</div>
-						<h3 class="card-title text-xl md:text-2xl font-bold">Share & Learn</h3>
-						<p class="text-sm md:text-base">Exchange tips, ask questions, and learn from the collective experience of the community.</p>
-					</div>
-				</div>
-				<div class="card bg-gray-800 shadow-2xl backdrop-blur-lg backdrop-filter bg-opacity-50 border border-gray-700 transform hover:scale-105 transition duration-300">
-					<div class="card-body items-center text-center p-6 md:p-8">
-						<div class="p-4 bg-green-700 rounded-full mb-4">
-							<Icon name="mdi:heart-pulse" class="w-8 h-8 text-white" />
-						</div>
-						<h3 class="card-title text-xl md:text-2xl font-bold">Stay Motivated</h3>
-						<p class="text-sm md:text-base">Get the encouragement and support you need to stay on track and achieve your goals.</p>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+  <!-- Our Mission Section -->
+  <section class="py-16 bg-surface">
+    <div class="container mx-auto text-center">
+      <h2 class="text-4xl font-bold mb-12 text-primary">Our Mission at Dhaka Health Club</h2>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="card p-8 text-center">
+          <h3 class="text-2xl font-bold mb-4 text-secondary">Social Connection</h3>
+          <p class="text-text-secondary">We foster a welcoming environment for you to connect with like-minded people and build lasting friendships.</p>
+        </div>
+        <div class="card p-8 text-center">
+          <h3 class="text-2xl font-bold mb-4 text-secondary">Holistic Health</h3>
+          <p class="text-text-secondary">Explore resources, join events, and engage in discussions that nurture your physical and mental well-being.</p>
+        </div>
+        <div class="card p-8 text-center">
+          <h3 class="text-2xl font-bold mb-4 text-secondary">Societal Betterment</h3>
+          <p class="text-text-secondary">Collaborate on meaningful projects and initiatives that create a positive and lasting impact in our communities.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-	<div class="bg-gray-800 py-16 md:py-20">
-		<div class="container mx-auto text-center px-4">
-			<h2 class="text-3xl md:text-4xl font-bold mb-4 uppercase tracking-tighter">Ready to Join?</h2>
-			<p class="mb-8 text-sm md:text-base">Create your profile, connect with others, and start your journey to a healthier, happier you.</p>
-			<a href="/register" class="btn btn-primary bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white font-bold py-2 px-4 rounded-full shadow-lg hover:shadow-green-500/40 transform hover:scale-105 transition duration-300">Create Your Profile</a>
-		</div>
-	</div>
+  <!-- Upcoming Events Section -->
+  <section class="py-16">
+    <div class="container mx-auto text-center">
+      <h2 class="text-4xl font-bold mb-12 text-primary">Upcoming Events</h2>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="card p-8">
+          <h3 class="text-2xl font-bold mb-4">Community Garden Day</h3>
+          <p class="text-text-secondary mb-4">Join us for a day of planting and connecting with nature. All skill levels are welcome!</p>
+          <a href="#" class="btn btn-primary">Learn More</a>
+        </div>
+        <div class="card p-8">
+          <h3 class="text-2xl font-bold mb-4">Wellness Workshop: Mindfulness 101</h3>
+          <p class="text-text-secondary mb-4">An introductory workshop on mindfulness and meditation techniques to reduce stress.</p>
+          <a href="#" class="btn btn-primary">Learn More</a>
+        </div>
+        <div class="card p-8">
+          <h3 class="text-2xl font-bold mb-4">Volunteer at the Local Shelter</h3>
+          <p class="text-text-secondary mb-4">Make a difference in our community by volunteering to help those in need.</p>
+          <a href="#" class="btn btn-primary">Learn More</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Member Stories Section -->
+  <section class="py-16 bg-surface">
+    <div class="container mx-auto text-center">
+      <h2 class="text-4xl font-bold mb-12 text-primary">What Our Members Are Saying</h2>
+      <div class="grid md:grid-cols-2 gap-8">
+        <div class="card p-8 text-left">
+          <p class="text-text-secondary mb-4">"Dhaka Health Club has been a game-changer for me. I've met so many amazing people and feel more connected to my community than ever before."</p>
+          <p class="font-bold text-primary">- Sarah, Community Member</p>
+        </div>
+        <div class="card p-8 text-left">
+          <p class="text-text-secondary mb-4">"The wellness workshops have been incredibly helpful. I've learned so much about myself and have developed healthier habits."</p>
+          <p class="font-bold text-primary">- John, Community Member</p>
+        </div>
+      </div>
+    </div>
+  </section>
 </Layout>
