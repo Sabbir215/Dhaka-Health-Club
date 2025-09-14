@@ -1,28 +1,27 @@
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { auth } from "./client";
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut,
+  onAuthStateChanged
+} from "firebase/auth";
+import { app } from "./client";
+import type { User } from 'firebase/auth';
 
-export const signUp = async (email, password) => {
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    return userCredential.user;
-  } catch (error) {
-    throw error;
-  }
+const auth = getAuth(app);
+
+export const signUp = (email: string, password: string): Promise<any> => {
+  return createUserWithEmailAndPassword(auth, email, password);
 };
 
-export const logIn = async (email, password) => {
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    return userCredential.user;
-  } catch (error) {
-    throw error;
-  }
+export const logIn = (email: string, password: string): Promise<any> => {
+  return signInWithEmailAndPassword(auth, email, password);
+}
+
+export const logOut = (): Promise<void> => {
+  return signOut(auth);
 };
 
-export const logOut = async () => {
-  try {
-    await signOut(auth);
-  } catch (error) {
-    throw error;
-  }
+export const onAuthStateChangedListener = (callback: (user: User | null) => void) => {
+  return onAuthStateChanged(auth, callback);
 };

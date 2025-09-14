@@ -1,47 +1,142 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import admin from 'firebase-admin';
+
+// --- Server-Side Data Fetching ---
+// This code runs securely on the server when the page is requested.
+
+let users = [];
+let fetchError = null;
+
+// A flag to ensure we only initialize the app once.
+let isInitialized = admin.apps.length > 0;
+
+try {
+    // Astro and Vite securely load variables from a .env file
+    const privateKey = import.meta.env.PRIVATE_KEY;
+    const clientEmail = import.meta.env.CLIENT_EMAIL;
+    const projectId = import.meta.env.PROJECT_ID;
+
+    // Check if the required environment variables are present.
+    if (!privateKey || !clientEmail || !projectId) {
+        throw new Error('Missing Firebase credentials. Please create a .env file in your project root and add PRIVATE_KEY, CLIENT_EMAIL, and PROJECT_ID. See .env.example for format. You may need to restart the development server after creating the .env file.');
+    }
+
+    // Initialize Firebase Admin SDK if not already done.
+    if (!isInitialized) {
+        admin.initializeApp({
+            credential: admin.credential.cert({
+                privateKey: privateKey.replace(/\\n/g, '\n'),
+                clientEmail,
+                projectId,
+            }),
+        });
+        isInitialized = true;
+    }
+
+    // Fetch users from Firebase Authentication.
+    const userRecords = await admin.auth().listUsers();
+    users = userRecords.users.map(user => ({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        metadata: user.metadata,
+    }));
+
+} catch (error: any) {
+    console.error("Dashboard Server-Side Error:", error.message);
+    fetchError = error.message;
+}
 ---
 
 <Layout title="Dashboard">
   <div class="container mx-auto py-16">
     <h1 class="text-4xl font-bold mb-8 text-primary">Dashboard</h1>
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <!-- These cards are populated by the client-side script below -->
       <div class="card p-6">
         <h3 class="text-xl font-bold mb-2 text-secondary">Projects</h3>
-        <p class="text-4xl font-bold">12</p>
+        <p id="projects-count" class="text-4xl font-bold">0</p>
       </div>
       <div class="card p-6">
         <h3 class="text-xl font-bold mb-2 text-secondary">Tasks</h3>
-        <p class="text-4xl font-bold">4</p>
+        <p id="tasks-count" class="text-4xl font-bold">0</p>
       </div>
       <div class="card p-6">
         <h3 class="text-xl font-bold mb-2 text-secondary">Users</h3>
-        <p class="text-4xl font-bold">3</p>
+        <p id="users-count" class="text-4xl font-bold">0</p>
       </div>
       <div class="card p-6">
         <h3 class="text-xl font-bold mb-2 text-secondary">Notifications</h3>
-        <p class="text-4xl font-bold">7</p>
+        <p id="notifications-count" class="text-4xl font-bold">0</p>
       </div>
     </div>
     <div class="mt-12">
       <h2 class="text-3xl font-bold mb-6 text-primary">Recent Activity</h2>
       <div class="card p-6">
-        <ul>
-          <li class="py-2 border-b border-gray-200">User 'John Doe' joined the project 'Green Initiative'.</li>
-          <li class="py-2 border-b border-gray-200">Task 'Develop new feature' was completed.</li>
-          <li class="py-2">New project 'Eco-friendly packaging' was created.</li>
+        <ul id="recent-activity-list">
+          <!-- Populated by client-side script -->
         </ul>
+      </div>
+    </div>
+    <div class="mt-12">
+      <h2 class="text-3xl font-bold mb-6 text-primary">Registered Users</h2>
+      <div id="user-cards-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- User cards are now rendered on the server -->
+        {fetchError ? (
+          <div class="card p-6 bg-red-100 text-red-700 col-span-full">
+            <h3 class="text-xl font-bold mb-2">Error Fetching Users</h3>
+            <p>{fetchError}</p>
+          </div>
+        ) : ( 
+          users.map(user => (
+            <div class="card p-6">
+              <h3 class="text-xl font-bold mb-2 text-secondary">{user.displayName || user.email}</h3>
+              <p class="text-sm text-gray-500">UID: {user.uid}</p>
+              <p class="text-sm text-gray-500">Created: {new Date(user.metadata.creationTime).toLocaleDateString()}</p>
+            </div>
+          ))
+        )}
       </div>
     </div>
   </div>
 </Layout>
 
 <script>
-  import { auth } from "../firebase/client";
+  // This script remains for fetching the dashboard stats from the Realtime Database.
+  // The user fetching logic has been moved to the server.
   import { onAuthStateChanged } from "firebase/auth";
+  import { getDatabase, ref, get } from "firebase/database";
+  import { auth, app } from "../firebase/client";
 
-  onAuthStateChanged(auth, (user) => {
-    if (!user) {
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      // User is signed in, fetch dashboard stats
+      const db = getDatabase(app);
+      const dbRef = ref(db, 'dashboard');
+      const snapshot = await get(dbRef);
+      const data = snapshot.val();
+
+      if (data) {
+        document.getElementById('projects-count').textContent = data.projects || 0;
+        document.getElementById('tasks-count').textContent = data.tasks || 0;
+        document.getElementById('users-count').textContent = data.users || 0;
+        document.getElementById('notifications-count').textContent = data.notifications || 0;
+
+        const activityList = document.getElementById('recent-activity-list');
+        activityList.innerHTML = ''; 
+        if (data.recentActivity) {
+          data.recentActivity.forEach(activity => {
+            const li = document.createElement('li');
+            li.className = 'py-2 border-b border-gray-200';
+            li.textContent = activity.description;
+            activityList.appendChild(li);
+          });
+        }
+      }
+    } else {
+      // No user is signed in.
       window.location.href = "/login";
     }
   });

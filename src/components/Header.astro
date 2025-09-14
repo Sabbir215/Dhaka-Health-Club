@@ -20,7 +20,7 @@
 </header>
 
 <script>
-  import { onAuthStateChanged, logOut } from "../firebase/auth";
+  import { onAuthStateChangedListener, logOut } from "../firebase/auth";
 
   const desktopNav = document.getElementById("desktop-nav");
   const mobileMenu = document.getElementById("mobile-menu");
@@ -52,7 +52,7 @@
     <button id="mobile-logout-button" class=\"btn btn-secondary w-full mt-2\">Logout</button>
   `;
 
-  onAuthStateChanged((user) => {
+  onAuthStateChangedListener((user) => {
     if (user) {
       if(desktopNav) desktopNav.innerHTML = loggedInLinks;
       if(mobileMenu) mobileMenu.innerHTML = mobileLoggedInLinks;
