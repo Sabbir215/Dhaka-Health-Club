@@ -1,58 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import admin from 'firebase-admin';
-
-// --- Server-Side Data Fetching ---
-// This code runs securely on the server when the page is requested.
-
-let users = [];
-let fetchError = null;
-
-// A flag to ensure we only initialize the app once.
-let isInitialized = admin.apps.length > 0;
-
-try {
-    // Astro and Vite securely load variables from a .env file
-    const privateKey = import.meta.env.PRIVATE_KEY;
-    const clientEmail = import.meta.env.CLIENT_EMAIL;
-    const projectId = import.meta.env.PROJECT_ID;
-
-    // Check if the required environment variables are present.
-    if (!privateKey || !clientEmail || !projectId) {
-        throw new Error('Missing Firebase credentials. Please create a .env file in your project root and add PRIVATE_KEY, CLIENT_EMAIL, and PROJECT_ID. See .env.example for format. You may need to restart the development server after creating the .env file.');
-    }
-
-    // Initialize Firebase Admin SDK if not already done.
-    if (!isInitialized) {
-        admin.initializeApp({
-            credential: admin.credential.cert({
-                privateKey: privateKey.replace(/\\n/g, '\n'),
-                clientEmail,
-                projectId,
-            }),
-        });
-        isInitialized = true;
-    }
-
-    // Fetch users from Firebase Authentication.
-    const userRecords = await admin.auth().listUsers();
-    users = userRecords.users.map(user => ({
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-        metadata: user.metadata,
-    }));
-
-} catch (error: any) {
-    console.error("Dashboard Server-Side Error:", error.message);
-    fetchError = error.message;
-}
 ---
 
 <Layout title="Dashboard">
   <div class="container mx-auto py-16">
-    <h1 class="text-4xl font-bold mb-8 text-primary">Dashboard</h1>
+    <h1 id="welcome-message" class="text-4xl font-bold mb-8 text-primary"></h1>
+    
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
       <!-- These cards are populated by the client-side script below -->
       <div class="card p-6">
@@ -72,49 +25,43 @@ try {
         <p id="notifications-count" class="text-4xl font-bold">0</p>
       </div>
     </div>
+
     <div class="mt-12">
-      <h2 class="text-3xl font-bold mb-6 text-primary">Recent Activity</h2>
+      <h2 class="text-3xl font-bold mb-6 text-primary">Users</h2>
       <div class="card p-6">
-        <ul id="recent-activity-list">
-          <!-- Populated by client-side script -->
-        </ul>
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-gray-200">
+              <th class="py-2">Full Name</th>
+              <th class="py-2">Email</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body">
+            <!-- User data will be populated here -->
+          </tbody>
+        </table>
       </div>
     </div>
-    <div class="mt-12">
-      <h2 class="text-3xl font-bold mb-6 text-primary">Registered Users</h2>
-      <div id="user-cards-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <!-- User cards are now rendered on the server -->
-        {fetchError ? (
-          <div class="card p-6 bg-red-100 text-red-700 col-span-full">
-            <h3 class="text-xl font-bold mb-2">Error Fetching Users</h3>
-            <p>{fetchError}</p>
-          </div>
-        ) : ( 
-          users.map(user => (
-            <div class="card p-6">
-              <h3 class="text-xl font-bold mb-2 text-secondary">{user.displayName || user.email}</h3>
-              <p class="text-sm text-gray-500">UID: {user.uid}</p>
-              <p class="text-sm text-gray-500">Created: {new Date(user.metadata.creationTime).toLocaleDateString()}</p>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
+
   </div>
 </Layout>
 
 <script>
-  // This script remains for fetching the dashboard stats from the Realtime Database.
-  // The user fetching logic has been moved to the server.
-  import { onAuthStateChanged } from "firebase/auth";
+  import { onAuthStateChangedListener } from "../firebase/auth";
+  import { getFirestore, collection, getDocs } from "firebase/firestore";
   import { getDatabase, ref, get } from "firebase/database";
-  import { auth, app } from "../firebase/client";
+  import { app } from "../firebase/client";
 
-  onAuthStateChanged(auth, async (user) => {
+  const welcomeMessage = document.getElementById('welcome-message');
+
+  onAuthStateChangedListener(async (user) => {
     if (user) {
+      // Personalize the welcome message
+      welcomeMessage.textContent = `Welcome back, ${user.displayName || 'User'}!`;
+
       // User is signed in, fetch dashboard stats
-      const db = getDatabase(app);
-      const dbRef = ref(db, 'dashboard');
+      const rtdb = getDatabase(app);
+      const dbRef = ref(rtdb, 'dashboard');
       const snapshot = await get(dbRef);
       const data = snapshot.val();
 
@@ -123,18 +70,25 @@ try {
         document.getElementById('tasks-count').textContent = data.tasks || 0;
         document.getElementById('users-count').textContent = data.users || 0;
         document.getElementById('notifications-count').textContent = data.notifications || 0;
-
-        const activityList = document.getElementById('recent-activity-list');
-        activityList.innerHTML = ''; 
-        if (data.recentActivity) {
-          data.recentActivity.forEach(activity => {
-            const li = document.createElement('li');
-            li.className = 'py-2 border-b border-gray-200';
-            li.textContent = activity.description;
-            activityList.appendChild(li);
-          });
-        }
       }
+
+      // Fetch and display users
+      const db = getFirestore(app);
+      const usersCollection = collection(db, "users");
+      const usersSnapshot = await getDocs(usersCollection);
+      const usersTableBody = document.getElementById('users-table-body');
+      usersTableBody.innerHTML = ''; // Clear existing rows
+
+      usersSnapshot.forEach(doc => {
+        const userData = doc.data();
+        const row = usersTableBody.insertRow();
+        const nameCell = row.insertCell();
+        const emailCell = row.insertCell();
+
+        nameCell.textContent = userData.fullName;
+        emailCell.textContent = userData.email;
+      });
+
     } else {
       // No user is signed in.
       window.location.href = "/login";
