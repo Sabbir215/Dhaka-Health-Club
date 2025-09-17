@@ -1,25 +1,56 @@
+
 ---
 import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="Register for Dhaka Health Club">
-  <div class="min-h-[80vh] flex items-center justify-center">
-    <div class="card w-full max-w-md p-8">
+  <div class="min-h-[80vh] flex items-center justify-center py-12">
+    <div class="card w-full max-w-lg p-8">
       <h2 class="text-3xl font-bold text-center mb-6 text-primary">Create Your Account</h2>
+      
       <form id="register-form">
+        
+        <div class="flex flex-col items-center mb-6">
+            <img id="profile-image-preview" src="/avatar.svg" alt="Profile Picture Preview" class="w-32 h-32 rounded-full object-cover mb-4 border-4 border-gray-200">
+            <input type="file" id="file-input" class="hidden" accept="image/*">
+            <button type="button" id="upload-button" class="btn btn-secondary">Choose Picture</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="mb-4">
+            <label for="fullName" class="block mb-2 text-text-secondary">Full Name</label>
+            <input type="text" id="fullName" name="fullName" placeholder="John Doe" class="w-full px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" required />
+          </div>
+          <div class="mb-4">
+            <label for="email" class="block mb-2 text-text-secondary">Email</label>
+            <input type="email" id="email" name="email" placeholder="john.doe@example.com" class="w-full px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" required />
+          </div>
+          <div class="mb-4">
+            <label for="phone" class="block mb-2 text-text-secondary">Phone Number</label>
+            <input type="tel" id="phone" name="phone" placeholder="+1234567890" class="w-full px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+           <div class="mb-4">
+            <label for="dob" class="block mb-2 text-text-secondary">Date of Birth</label>
+            <input type="date" id="dob" name="dob" class="w-full px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+          <div class="mb-4">
+            <label for="password" class="block mb-2 text-text-secondary">Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter a strong password" class="w-full px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" required />
+          </div>
+          <div class="mb-4">
+            <label for="confirm-password" class="block mb-2 text-text-secondary">Confirm Password</label>
+            <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm your password" class="w-full px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" required />
+          </div>
+        </div>
+
         <div class="mb-4">
-          <label for="name" class="block mb-2 text-text-secondary">Name</label>
-          <input type="text" id="name" name="name" class="w-full px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" />
+            <label for="address" class="block mb-2 text-text-secondary">Address</label>
+            <textarea id="address" name="address" placeholder="123 Main St, Anytown, USA" class="w-full px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
         </div>
-        <div class="mb-4">
-          <label for="email" class="block mb-2 text-text-secondary">Email</label>
-          <input type="email" id="email" name="email" class="w-full px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" />
-        </div>
-        <div class="mb-6">
-          <label for="password" class="block mb-2 text-text-secondary">Password</label>
-          <input type="password" id="password" name="password" class="w-full px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" />
-        </div>
-        <button type="submit" class="btn btn-primary w-full">Register</button>
+
+        <div id="error-message" class="text-red-500 text-sm text-center mb-4"></div>
+
+        <button type="submit" id="submit-button" class="btn btn-primary w-full">Register</button>
       </form>
       <p class="text-center mt-6 text-text-secondary">
         Already have an account? <a href="/login" class="text-primary hover:underline">Login</a>
@@ -32,17 +63,101 @@ import Layout from '../layouts/Layout.astro';
   import { signUp } from "../firebase/auth";
 
   const form = document.getElementById("register-form");
+  const errorMessageDiv = document.getElementById("error-message");
+  const submitButton = document.getElementById("submit-button");
+  
+  const profileImagePreview = document.getElementById("profile-image-preview");
+  const fileInput = document.getElementById("file-input");
+  const uploadButton = document.getElementById("upload-button");
+
+  let selectedFile = null;
+
+  uploadButton.addEventListener('click', () => {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', (event) => {
+    const file = (event.target as HTMLInputElement).files[0];
+    if (file) {
+      selectedFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        profileImagePreview.src = e.target.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    errorMessageDiv.textContent = '';
+    submitButton.disabled = true;
+    submitButton.textContent = 'Registering...';
+
+    const fullName = form.fullName.value;
     const email = form.email.value;
     const password = form.password.value;
+    const confirmPassword = form["confirm-password"].value;
+    const phone = form.phone.value;
+    const dob = form.dob.value;
+    const address = form.address.value;
+
+    if (password !== confirmPassword) {
+      errorMessageDiv.textContent = "Passwords do not match.";
+      submitButton.disabled = false;
+      submitButton.textContent = 'Register';
+      return;
+    }
+
+    let photoURL = 'https://res.cloudinary.com/dsewycgig/image/upload/v1716301373/user-profile-icon-in-flat-style-member-avatar-illustration-on-isolated-background-human-permission-sign-business-concept_157943-15752_y9q0go.jpg';
+
+    if (selectedFile) {
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData, // No 'Content-Type' header, browser sets it automatically for FormData
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'An unknown upload error occurred.');
+        }
+        
+        photoURL = result.url;
+
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        errorMessageDiv.textContent = `Upload Error: ${error.message}`;
+        submitButton.disabled = false;
+        submitButton.textContent = 'Register';
+        return;
+      }
+    }
 
     try {
-      await signUp(email, password);
+      await signUp(email, password, fullName, phone, dob, address, photoURL);
       window.location.href = "/dashboard";
     } catch (error) {
-      alert(error.message);
+      let message = "An unexpected error occurred.";
+      if (error.code === 'auth/email-already-in-use') {
+        message = "This email address is already in use.";
+      } else if (error.code === 'auth/weak-password') {
+        message = "Password is too weak. It should be at least 6 characters.";
+      }
+      errorMessageDiv.textContent = `Registration Error: ${message}`;
+    } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Register';
+    }
+  });
+
+  form.addEventListener('input', () => {
+    if (errorMessageDiv.textContent) {
+      errorMessageDiv.textContent = '';
     }
   });
 </script>

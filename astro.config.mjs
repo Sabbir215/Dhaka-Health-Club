@@ -5,5 +5,8 @@ import icon from 'astro-icon';
 
 // https://astro.build/config
 export default defineConfig({
-  integrations: [tailwind(), icon()]
+  integrations: [tailwind(), icon()],
+  server: {
+    maxRequestBodySize: 10 * 1024 * 1024, // Set to 10MB, for example
+  }
 });

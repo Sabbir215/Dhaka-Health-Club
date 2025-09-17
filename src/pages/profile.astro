@@ -1,66 +1,153 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { auth } from '../firebase/client';
+import { onAuthStateChanged } from 'firebase/auth';
+
+let user = null;
+
+// We need to run this on the client
+onAuthStateChanged(auth, (u) => {
+  if (u) {
+    user = u;
+  }
+});
 ---
 
-<Layout title="Profile">
-  <div class="container mx-auto py-16">
-    <div class="card p-8">
-      <div class="flex items-center space-x-6 mb-8">
-        <img src="/avatar.svg" alt="User Avatar" class="w-24 h-24 rounded-full border-4 border-primary">
-        <div>
-          <h1 class="text-3xl font-bold text-primary">John Doe</h1>
-          <p class="text-text-secondary">john.doe@example.com</p>
-        </div>
-      </div>
-      <div>
-        <h2 class="text-2xl font-bold mb-6 text-primary">Settings</h2>
-        <form>
-          <div class="mb-4">
-            <label for="name" class="block mb-2">Name</label>
-            <input type="text" id="name" value="John Doe" class="w-full px-4 py-2 rounded bg-background border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" />
-          </div>
-          <div class="mb-4">
-            <label for="email" class="block mb-2">Email</label>
-            <input type="email" id="email" value="john.doe@example.com" class="w-full px-4 py-2 rounded bg-background border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" />
-          </div>
-          <div class="mb-6">
-            <label for="password" class="block mb-2">New Password</label>
-            <input type="password" id="password" class="w-full px-4 py-2 rounded bg-background border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" />
-          </div>
-          <button type="submit" class="btn btn-primary">Save Changes</button>
-        </form>
+<Layout title="My Profile">
+  <div class="max-w-xl mx-auto mt-10 bg-white p-8 rounded-lg shadow-md">
+    <h1 class="text-2xl font-bold mb-6 text-center">My Profile</h1>
 
-        <div class="mt-8">
-            <button id="logout-btn" class="btn btn-danger">Logout</button>
-        </div>
-      </div>
+    <div class="flex flex-col items-center mb-6">
+        <img id="profile-image" src={user?.photoURL ?? '../avatar.svg'} alt="Profile Picture" class="w-32 h-32 rounded-full object-cover mb-4 border-4 border-gray-200">
+        <input type="file" id="file-input" class="hidden" accept="image/*">
+        <button id="upload-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Change Picture
+        </button>
     </div>
+
+    <div id="user-info">
+      <!-- User info will be loaded here by the client-side script -->
+    </div>
+
+     <div id="error-message" class="text-red-500 text-sm text-center mb-4"></div>
+
   </div>
+
+  <script>
+    import { auth, db } from '../firebase/client';
+    import { onAuthStateChanged, updateProfile } from 'firebase/auth';
+    import { doc, getDoc, updateDoc } from 'firebase/firestore';
+
+    const profileImage = document.getElementById('profile-image') as HTMLImageElement;
+    const fileInput = document.getElementById('file-input') as HTMLInputElement;
+    const uploadButton = document.getElementById('upload-button') as HTMLButtonElement;
+    const userInfoDiv = document.getElementById('user-info') as HTMLDivElement;
+    const errorMessageDiv = document.getElementById('error-message') as HTMLDivElement;
+
+    let currentUser = null;
+
+    // Helper function to convert file to base64
+    const toBase64 = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        profileImage.src = user.photoURL ?? '../avatar.svg';
+
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          userInfoDiv.innerHTML = `
+            <div class="mb-4">
+                <p class="font-bold">Name:</p>
+                <p>${userData.fullName}</p>
+            </div>
+            <div class="mb-4">
+                <p class="font-bold">Email:</p>
+                <p>${userData.email}</p>
+            </div>
+            <div class="mb-4">
+                <p class="font-bold">Phone:</p>
+                <p>${userData.phone}</p>
+            </div>
+            <div class="mb-4">
+                <p class="font-bold">Date of Birth:</p>
+                <p>${userData.dob}</p>
+            </div>
+            <div class="mb-4">
+                <p class="font-bold">Address:</p>
+                <p>${userData.address}</p>
+            </div>
+          `;
+        } else {
+          userInfoDiv.innerHTML = `<p>No profile data found.</p>`;
+        }
+
+      } else {
+        window.location.href = '/login';
+      }
+    });
+
+    uploadButton.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', async (event) => {
+        const file = (event.target as HTMLInputElement).files[0];
+        if (!file) return;
+
+        errorMessageDiv.textContent = '';
+        uploadButton.disabled = true;
+        uploadButton.textContent = 'Uploading...';
+
+        try {
+            const dataUri = await toBase64(file) as string;
+            const [meta, base64Data] = dataUri.split(',');
+            const mimeType = meta.match(/:(.*?);/)[1];
+
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ file: base64Data, mimeType: mimeType }),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                let errorMessage = `Image upload failed: ${response.statusText}`;
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    errorMessage = errorJson.error || errorMessage;
+                } catch (e) {
+                     console.error("Non-JSON error response:", errorText);
+                }
+                throw new Error(errorMessage);
+            }
+
+            const result = await response.json();
+            const url = result.url;
+
+            await updateProfile(currentUser, { photoURL: url });
+            const userDocRef = doc(db, 'users', currentUser.uid);
+            await updateDoc(userDocRef, { photoURL: url });
+
+            profileImage.src = url;
+
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            errorMessageDiv.textContent = error.message;
+        } finally {
+            uploadButton.disabled = false;
+            uploadButton.textContent = 'Change Picture';
+        }
+    });
+  </script>
 </Layout>
-
-<script>
-  import { auth } from "../firebase/client";
-  import { onAuthStateChanged } from "firebase/auth";
-  import { logOut } from "../firebase/auth";
-
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-        const userName = document.querySelector('h1');
-        const userEmail = document.querySelector('p');
-        userName.textContent = user.displayName || 'No Name';
-        userEmail.textContent = user.email;
-    } else {
-      window.location.href = "/login";
-    }
-  });
-
-  const logoutBtn = document.getElementById("logout-btn");
-  logoutBtn.addEventListener("click", async () => {
-    try {
-      await logOut();
-      window.location.href = "/login";
-    } catch (error) {
-      alert(error.message);
-    }
-  });
-</script>

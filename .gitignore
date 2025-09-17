@@ -1,20 +1,3 @@
-# Environment variables
+node_modules
 .env
-.env.*
-
-# Dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# Log files
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Build output
-/dist
-/.astro
-
-# Other
-.DS_Store
+.history/
