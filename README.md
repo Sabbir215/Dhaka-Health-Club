@@ -5,7 +5,7 @@ Welcome to the Dhaka Health Club (DHC), a supportive and collaborative environme
 
 ## Getting Started
 
-To get started, simply clone the repository and run the following commands:
+To get started, simply clone the repository, set the environment variables, and run the following commands:
 
 ```
 
