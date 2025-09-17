@@ -1,3 +1,4 @@
+
 ---
 import Layout from '../layouts/Layout.astro';
 ---
@@ -87,14 +88,6 @@ import Layout from '../layouts/Layout.astro';
     }
   });
 
-  // Helper function to convert file to base64
-  const toBase64 = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-  });
-
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     errorMessageDiv.textContent = '';
@@ -116,40 +109,29 @@ import Layout from '../layouts/Layout.astro';
       return;
     }
 
-    let photoURL = null;
+    let photoURL = 'https://res.cloudinary.com/dsewycgig/image/upload/v1716301373/user-profile-icon-in-flat-style-member-avatar-illustration-on-isolated-background-human-permission-sign-business-concept_157943-15752_y9q0go.jpg';
 
     if (selectedFile) {
       try {
-        const dataUri = await toBase64(selectedFile) as string;
-        const [meta, base64Data] = dataUri.split(',');
-        const mimeType = meta.match(/:(.*?);/)[1];
+        const formData = new FormData();
+        formData.append('file', selectedFile);
 
         const response = await fetch('/api/upload', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ file: base64Data, mimeType: mimeType }),
+          body: formData, // No 'Content-Type' header, browser sets it automatically for FormData
         });
 
+        const result = await response.json();
+
         if (!response.ok) {
-            const errorText = await response.text();
-            let errorMessage = `Image upload failed: ${response.statusText}`;
-            try {
-                const errorJson = JSON.parse(errorText);
-                errorMessage = errorJson.error || errorMessage;
-            } catch (e) {
-                console.error("Non-JSON error response:", errorText);
-            }
-            throw new Error(errorMessage);
+          throw new Error(result.error || 'An unknown upload error occurred.');
         }
         
-        const result = await response.json();
         photoURL = result.url;
 
       } catch (error) {
         console.error('Error uploading image:', error);
-        errorMessageDiv.textContent = error.message;
+        errorMessageDiv.textContent = `Upload Error: ${error.message}`;
         submitButton.disabled = false;
         submitButton.textContent = 'Register';
         return;
@@ -166,7 +148,7 @@ import Layout from '../layouts/Layout.astro';
       } else if (error.code === 'auth/weak-password') {
         message = "Password is too weak. It should be at least 6 characters.";
       }
-      errorMessageDiv.textContent = message;
+      errorMessageDiv.textContent = `Registration Error: ${message}`;
     } finally {
         submitButton.disabled = false;
         submitButton.textContent = 'Register';

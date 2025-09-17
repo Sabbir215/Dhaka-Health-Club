@@ -1,28 +1,75 @@
+
 ---
 import Layout from '../layouts/Layout.astro';
+import { getFirestore, doc, getDoc } from "firebase-admin/firestore";
+import { app } from "../firebase/client"; // This is for client-side, we need admin for server-side
+
+// --- Server-Side Data Fetching ---
+// Astro allows us to fetch data directly in the frontmatter. 
+// This code runs on the server at build time or on request.
+
+let dashboardData = null;
+let users = [];
+
+// IMPORTANT: Server-side Firebase Admin SDK should be used for this.
+// The client-side SDK is not ideal for server-side rendering as it may expose sensitive data.
+// For this educational purpose, we will simulate the data fetching. A robust implementation
+// would use the Firebase Admin SDK to fetch data securely on the server.
+
+// Helper function to simulate fetching dashboard data
+async function getDashboardData() {
+    // In a real app, this would be: 
+    // const adminDb = getFirestore();
+    // const docRef = doc(adminDb, "dashboard", "stats");
+    // const docSnap = await getDoc(docRef);
+    // return docSnap.exists() ? docSnap.data() : null;
+    
+    // Simulate the data we just seeded
+    return {
+        projects: 12,
+        tasks: 4,
+        users: 3,
+        notifications: 7,
+    };
+}
+
+// Helper function to simulate fetching user data
+async function getUsers() {
+    // In a real app, this would be:
+    // const adminDb = getFirestore();
+    // const usersCollection = collection(adminDb, "users");
+    // const usersSnapshot = await getDocs(usersCollection);
+    // return usersSnapshot.docs.map(doc => doc.data());
+
+    // Returning empty for now, will be populated client-side
+    return [];
+}
+
+dashboardData = await getDashboardData();
+users = await getUsers();
+
 ---
 
 <Layout title="Dashboard">
   <div class="container mx-auto py-16">
-    <h1 id="welcome-message" class="text-4xl font-bold mb-8 text-primary"></h1>
+    <h1 id="welcome-message" class="text-4xl font-bold mb-8 text-primary">Welcome!</h1>
     
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-      <!-- These cards are populated by the client-side script below -->
       <div class="card p-6">
         <h3 class="text-xl font-bold mb-2 text-secondary">Projects</h3>
-        <p id="projects-count" class="text-4xl font-bold">0</p>
+        <p id="projects-count" class="text-4xl font-bold">{dashboardData?.projects || 0}</p>
       </div>
       <div class="card p-6">
         <h3 class="text-xl font-bold mb-2 text-secondary">Tasks</h3>
-        <p id="tasks-count" class="text-4xl font-bold">0</p>
+        <p id="tasks-count" class="text-4xl font-bold">{dashboardData?.tasks || 0}</p>
       </div>
       <div class="card p-6">
         <h3 class="text-xl font-bold mb-2 text-secondary">Users</h3>
-        <p id="users-count" class="text-4xl font-bold">0</p>
+        <p id="users-count" class="text-4xl font-bold">{dashboardData?.users || 0}</p>
       </div>
       <div class="card p-6">
         <h3 class="text-xl font-bold mb-2 text-secondary">Notifications</h3>
-        <p id="notifications-count" class="text-4xl font-bold">0</p>
+        <p id="notifications-count" class="text-4xl font-bold">{dashboardData?.notifications || 0}</p>
       </div>
     </div>
 
@@ -37,7 +84,7 @@ import Layout from '../layouts/Layout.astro';
             </tr>
           </thead>
           <tbody id="users-table-body">
-            <!-- User data will be populated here -->
+            <!-- Client-side script will populate this -->
           </tbody>
         </table>
       </div>
@@ -48,36 +95,34 @@ import Layout from '../layouts/Layout.astro';
 
 <script>
   import { onAuthStateChangedListener } from "../firebase/auth";
-  import { getFirestore, collection, getDocs } from "firebase/firestore";
-  import { getDatabase, ref, get } from "firebase/database";
+  import { getFirestore, collection, getDocs, doc, getDoc } from "firebase/firestore";
   import { app } from "../firebase/client";
 
   const welcomeMessage = document.getElementById('welcome-message');
 
   onAuthStateChangedListener(async (user) => {
     if (user) {
-      // Personalize the welcome message
       welcomeMessage.textContent = `Welcome back, ${user.displayName || 'User'}!`;
+      
+      const db = getFirestore(app);
 
-      // User is signed in, fetch dashboard stats
-      const rtdb = getDatabase(app);
-      const dbRef = ref(rtdb, 'dashboard');
-      const snapshot = await get(dbRef);
-      const data = snapshot.val();
+      // --- Fetch and Render Dashboard Stats from Firestore ---
+      const statsDocRef = doc(db, "dashboard", "stats");
+      const statsDocSnap = await getDoc(statsDocRef);
 
-      if (data) {
+      if (statsDocSnap.exists()) {
+        const data = statsDocSnap.data();
         document.getElementById('projects-count').textContent = data.projects || 0;
         document.getElementById('tasks-count').textContent = data.tasks || 0;
         document.getElementById('users-count').textContent = data.users || 0;
         document.getElementById('notifications-count').textContent = data.notifications || 0;
       }
 
-      // Fetch and display users
-      const db = getFirestore(app);
+      // --- Fetch and Render Users Table from Firestore ---
       const usersCollection = collection(db, "users");
       const usersSnapshot = await getDocs(usersCollection);
       const usersTableBody = document.getElementById('users-table-body');
-      usersTableBody.innerHTML = ''; // Clear existing rows
+      usersTableBody.innerHTML = ''; 
 
       usersSnapshot.forEach(doc => {
         const userData = doc.data();
@@ -90,7 +135,6 @@ import Layout from '../layouts/Layout.astro';
       });
 
     } else {
-      // No user is signed in.
       window.location.href = "/login";
     }
   });
