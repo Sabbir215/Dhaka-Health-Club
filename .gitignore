@@ -92,6 +92,7 @@ dist
 
 # Astro files
 dist/
+.astro/
 
 # Environment variables
 .env
