@@ -3,12 +3,26 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "astro dev --port 4323",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "force-reload": "echo 'reloading...'"
   },
   "dependencies": {
-    "astro": "^5.13.7"
+    "@astrojs/tailwind": "^6.0.2",
+    "@astrojs/vercel": "^8.2.7",
+    "@iconify-json/mdi": "^1.2.3",
+    "@tailwindcss/vite": "^4.1.13",
+    "astro": "^5.13.7",
+    "astro-icon": "^1.1.5",
+    "cloudinary": "^2.7.0",
+    "tailwindcss": "^3.4.17"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.5",
+    "firebase": "^12.2.1",
+    "firebase-admin": "^12.7.0",
+    "firebase-tools": "^14.16.0"
   }
 }
